@@ -1,0 +1,11 @@
+# Local MySQL runtime data (server binaries, not source code)
+Database/data/
+
+# User-uploaded content
+Uploads/*
+!Uploads/.gitkeep
+
+# OS / editor cruft
+Thumbs.db
+.DS_Store
+*.log

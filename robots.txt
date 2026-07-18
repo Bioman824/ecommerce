@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /Admin/
+Disallow: /Database/
+Sitemap: http://localhost/e commerce/sitemap.php
+
