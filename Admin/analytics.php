@@ -2,34 +2,86 @@
 /**
  * Analytics reporting page for the admin dashboard.
  */
-require_once __DIR__ . '/../Includes/functions.php';
+$pageTitle = 'Analytics';
+$pageSubtitle = 'A snapshot of store performance.';
+$activeNav = 'analytics';
+require_once __DIR__ . '/Includes/header.php';
 
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
-    redirect(BASE_URL . 'Admin/login.php');
+$revenue = db()->query('SELECT COALESCE(SUM(total), 0) as revenue FROM orders')->fetch();
+$ordersCount = db()->query('SELECT COUNT(*) as count FROM orders')->fetch();
+$customersCount = db()->query('SELECT COUNT(*) as count FROM users WHERE role = "customer"')->fetch();
+$productsCount = db()->query('SELECT COUNT(*) as count FROM products')->fetch();
+$avgOrderValue = ((int) $ordersCount['count'] > 0) ? ((float) $revenue['revenue'] / (int) $ordersCount['count']) : 0.0;
+$statusBreakdown = db()->query('SELECT status, COUNT(*) as count FROM orders GROUP BY status ORDER BY count DESC')->fetchAll();
+$maxStatusCount = 0;
+foreach ($statusBreakdown as $row) {
+    $maxStatusCount = max($maxStatusCount, (int) $row['count']);
 }
-
-$revenueStmt = db()->query('SELECT COALESCE(SUM(total), 0) as revenue FROM orders');
-$ordersStmt = db()->query('SELECT COUNT(*) as count FROM orders');
-$customersStmt = db()->query('SELECT COUNT(*) as count FROM users WHERE role = "customer"');
-$productsStmt = db()->query('SELECT COUNT(*) as count FROM products');
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analytics - Admin</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-<div class="container-fluid p-4">
-    <h2 class="fw-bold mb-4">Analytics</h2>
-    <div class="row g-4">
-        <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Revenue</h6><h3 class="fw-bold"><?php echo format_currency((float) $revenueStmt->fetch()['revenue']); ?></h3></div></div>
-        <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Orders</h6><h3 class="fw-bold"><?php echo (int) $ordersStmt->fetch()['count']; ?></h3></div></div>
-        <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Customers</h6><h3 class="fw-bold"><?php echo (int) $customersStmt->fetch()['count']; ?></h3></div></div>
-        <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Products</h6><h3 class="fw-bold"><?php echo (int) $productsStmt->fetch()['count']; ?></h3></div></div>
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+            <div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value"><?php echo format_currency((float) $revenue['revenue']); ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-receipt"></i></div>
+            <div>
+                <div class="stat-label">Orders</div>
+                <div class="stat-value"><?php echo (int) $ordersCount['count']; ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+            <div>
+                <div class="stat-label">Avg. Order Value</div>
+                <div class="stat-value"><?php echo format_currency($avgOrderValue); ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="stat-label">Customers</div>
+                <div class="stat-value"><?php echo (int) $customersCount['count']; ?></div>
+            </div>
+        </div>
     </div>
 </div>
-</body>
-</html>
+
+<div class="admin-card">
+    <div class="admin-card-header">
+        <div>
+            <h5>Orders by Status</h5>
+            <p>Distribution of every order on record</p>
+        </div>
+    </div>
+    <div class="admin-card-body">
+        <?php if (!empty($statusBreakdown)): ?>
+            <?php foreach ($statusBreakdown as $row):
+                $pct = $maxStatusCount > 0 ? round(((int) $row['count'] / $maxStatusCount) * 100) : 0;
+            ?>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="status-pill status-<?php echo e($row['status']); ?>"><?php echo e($row['status']); ?></span>
+                        <span class="fw-semibold small"><?php echo (int) $row['count']; ?></span>
+                    </div>
+                    <div class="progress" style="height: 8px; border-radius: 999px;">
+                        <div class="progress-bar" role="progressbar" style="width: <?php echo $pct; ?>%; background: var(--admin-accent);"></div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        <?php else: ?>
+            <div class="admin-empty"><i class="bi bi-graph-up-arrow"></i><h6>No order data yet</h6><p>Charts will populate once orders start coming in.</p></div>
+        <?php endif; ?>
+    </div>
+</div>
+<?php require_once __DIR__ . '/Includes/footer.php'; ?>

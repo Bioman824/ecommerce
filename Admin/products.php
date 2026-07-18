@@ -2,12 +2,12 @@
 /**
  * Product management interface in the admin panel.
  */
-require_once __DIR__ . '/../Includes/functions.php';
+$pageTitle = 'Products';
+$pageSubtitle = 'Add new products and review your current catalog.';
+$activeNav = 'products';
+require_once __DIR__ . '/Includes/header.php';
 
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
-    redirect(BASE_URL . 'Admin/login.php');
-}
-
+$successMessage = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     verify_csrf();
     $name = sanitize($_POST['name'] ?? '');
@@ -21,56 +21,103 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $successMessage = 'Product added.';
 }
 
-$products = db()->query('SELECT id, name, slug, regular_price, sale_price, stock_quantity FROM products ORDER BY created_at DESC LIMIT 20')->fetchAll();
+$products = db()->query('SELECT id, name, slug, regular_price, sale_price, stock_quantity, image_url FROM products ORDER BY created_at DESC LIMIT 20')->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Products - Admin</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-</head>
-<body>
-<div class="container-fluid p-4">
-    <h2 class="fw-bold mb-4">Products</h2>
-    <?php if (!empty($successMessage)): ?><div class="alert alert-success"><?php echo e($successMessage); ?></div><?php endif; ?>
-    <div class="row g-4">
-        <div class="col-lg-4">
-            <div class="card p-4">
-                <h5 class="fw-bold">Add Product</h5>
+<?php if ($successMessage !== ''): ?><div class="admin-alert"><i class="bi bi-check-circle-fill me-1"></i><?php echo e($successMessage); ?></div><?php endif; ?>
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h5>Add Product</h5>
+                    <p>Publish a new item to the storefront</p>
+                </div>
+            </div>
+            <div class="admin-card-body">
                 <form method="post">
                     <?php echo csrf_field(); ?>
-                    <div class="mb-3"><input class="form-control" name="name" placeholder="Product Name" required></div>
-                    <div class="mb-3"><input class="form-control" name="slug" placeholder="slug"></div>
-                    <div class="mb-3"><input class="form-control" name="short_description" placeholder="Short Description"></div>
-                    <div class="mb-3"><input class="form-control" type="number" step="0.01" name="regular_price" placeholder="Regular Price"></div>
-                    <div class="mb-3"><input class="form-control" type="number" step="0.01" name="sale_price" placeholder="Sale Price"></div>
-                    <div class="mb-3"><input class="form-control" type="number" name="stock_quantity" placeholder="Stock"></div>
-                    <div class="mb-3"><input class="form-control" name="image_url" placeholder="Image URL"></div>
-                    <button class="btn btn-dark" type="submit">Save Product</button>
+                    <div class="mb-3">
+                        <label class="form-label">Product name</label>
+                        <input class="form-control" name="name" placeholder="e.g. Linen Tailored Blazer" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Slug</label>
+                        <input class="form-control" name="slug" placeholder="auto-generated if left blank">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Short description</label>
+                        <input class="form-control" name="short_description" placeholder="One line summary">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-6">
+                            <label class="form-label">Regular price</label>
+                            <input class="form-control" type="number" step="0.01" min="0" name="regular_price" placeholder="0.00">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label">Sale price</label>
+                            <input class="form-control" type="number" step="0.01" min="0" name="sale_price" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stock quantity</label>
+                        <input class="form-control" type="number" min="0" name="stock_quantity" placeholder="0">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Image URL</label>
+                        <input class="form-control" name="image_url" placeholder="https://...">
+                    </div>
+                    <button class="btn-admin-accent w-100" type="submit"><i class="bi bi-plus-lg me-1"></i>Save Product</button>
                 </form>
             </div>
         </div>
-        <div class="col-lg-8">
-            <div class="card p-4">
-                <h5 class="fw-bold">Existing Products</h5>
-                <table class="table">
-                    <thead><tr><th>Name</th><th>Slug</th><th>Price</th><th>Stock</th></tr></thead>
-                    <tbody>
-                    <?php foreach ($products as $product): ?>
-                        <tr>
-                            <td><?php echo e($product['name']); ?></td>
-                            <td><?php echo e($product['slug']); ?></td>
-                            <td><?php echo format_currency((float) $product['sale_price'] ?: (float) $product['regular_price']); ?></td>
-                            <td><?php echo (int) $product['stock_quantity']; ?></td>
-                        </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                </table>
+    </div>
+    <div class="col-lg-8">
+        <div class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h5>Existing Products</h5>
+                    <p><?php echo count($products); ?> most recently added</p>
+                </div>
+            </div>
+            <div class="admin-table-wrap">
+                <?php if (!empty($products)): ?>
+                    <table class="admin-table">
+                        <thead><tr><th>Product</th><th>Price</th><th>Stock</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($products as $product):
+                            $price = (float) ($product['sale_price'] > 0 ? $product['sale_price'] : $product['regular_price']);
+                            $stock = (int) $product['stock_quantity'];
+                            if ($stock <= 0) { $stockClass = 'status-out-of-stock'; $stockLabel = 'Out of stock'; }
+                            elseif ($stock <= 5) { $stockClass = 'status-low-stock'; $stockLabel = 'Low stock'; }
+                            else { $stockClass = 'status-in-stock'; $stockLabel = 'In stock'; }
+                        ?>
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <img class="row-thumb" src="<?php echo e($product['image_url'] ?? 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=100&q=60'); ?>" alt="<?php echo e($product['name']); ?>">
+                                        <div>
+                                            <div class="row-title"><?php echo e($product['name']); ?></div>
+                                            <div class="row-subtle"><?php echo e($product['slug']); ?></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <?php echo format_currency($price); ?>
+                                    <?php if ((float) $product['sale_price'] > 0): ?><div class="row-subtle text-decoration-line-through"><?php echo format_currency((float) $product['regular_price']); ?></div><?php endif; ?>
+                                </td>
+                                <td>
+                                    <span class="status-pill <?php echo $stockClass; ?>"><?php echo $stockLabel; ?></span>
+                                    <div class="row-subtle mt-1"><?php echo $stock; ?> units</div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="admin-empty"><i class="bi bi-bag"></i><h6>No products yet</h6><p>Add your first product using the form on the left.</p></div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 </div>
-</body>
-</html>
+<?php require_once __DIR__ . '/Includes/footer.php'; ?>

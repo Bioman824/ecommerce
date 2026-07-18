@@ -2,67 +2,114 @@
 /**
  * Admin dashboard overview.
  */
-require_once __DIR__ . '/../Includes/functions.php';
+$pageTitle = 'Dashboard';
+$pageSubtitle = 'Monitor sales, orders and product performance.';
+$activeNav = 'dashboard';
+require_once __DIR__ . '/Includes/header.php';
 
-if (!isset($_SESSION['user_role']) || $_SESSION['user_role'] !== 'admin') {
-    redirect(BASE_URL . 'Admin/login.php');
-}
-
-$ordersStmt = db()->query('SELECT COUNT(*) as count FROM orders');
-$orders = $ordersStmt->fetch();
-$productsStmt = db()->query('SELECT COUNT(*) as count FROM products');
-$products = $productsStmt->fetch();
-$customersStmt = db()->query('SELECT COUNT(*) as count FROM users WHERE role = "customer"');
-$customers = $customersStmt->fetch();
-$revenueStmt = db()->query('SELECT COALESCE(SUM(total),0) as total FROM orders');
-$revenue = $revenueStmt->fetch();
+$revenue = db()->query('SELECT COALESCE(SUM(total),0) as total FROM orders')->fetch();
+$orders = db()->query('SELECT COUNT(*) as count FROM orders')->fetch();
+$products = db()->query('SELECT COUNT(*) as count FROM products')->fetch();
+$customers = db()->query('SELECT COUNT(*) as count FROM users WHERE role = "customer"')->fetch();
+$recentOrders = db()->query('SELECT id, customer_name, total, status, created_at FROM orders ORDER BY created_at DESC LIMIT 5')->fetchAll();
+$recentProducts = db()->query('SELECT id, name, image_url, regular_price, sale_price, stock_quantity FROM products ORDER BY created_at DESC LIMIT 5')->fetchAll();
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Spotlight Fashion Store</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <style>
-        body { background: #f7f7fb; }
-        .sidebar { min-height: 100vh; background: #111; color: white; }
-        .card { border-radius: 1rem; border: 0; box-shadow: 0 15px 30px rgba(0,0,0,0.06); }
-    </style>
-</head>
-<body>
-<div class="container-fluid">
-    <div class="row">
-        <aside class="col-lg-2 sidebar p-4">
-            <h4 class="fw-bold mb-4">Spotlight Admin</h4>
-            <ul class="nav flex-column gap-2">
-                <li><a class="text-white-50" href="index.php">Dashboard</a></li>
-                <li><a class="text-white-50" href="products.php">Products</a></li>
-                <li><a class="text-white-50" href="orders.php">Orders</a></li>
-                <li><a class="text-white-50" href="customers.php">Customers</a></li>
-                <li><a class="text-white-50" href="analytics.php">Analytics</a></li>
-                <li><a class="text-white-50" href="media.php">Media</a></li>
-                <li><a class="text-white-50" href="settings.php">Settings</a></li>
-                <li class="mt-3 pt-3 border-top border-secondary"><a class="text-white-50" href="<?php echo BASE_URL; ?>logout.php"><i class="bi bi-box-arrow-right me-1"></i>Logout</a></li>
-            </ul>
-        </aside>
-        <main class="col-lg-10 p-4">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h2 class="fw-bold">Dashboard</h2>
-                    <p class="text-muted">Monitor sales, orders and product performance.</p>
-                </div>
-                <a class="btn btn-dark" href="../index.php">View Storefront</a>
+<div class="row g-4 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+            <div>
+                <div class="stat-label">Revenue</div>
+                <div class="stat-value"><?php echo format_currency((float) $revenue['total']); ?></div>
             </div>
-            <div class="row g-4">
-                <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Revenue</h6><h3 class="fw-bold"><?php echo format_currency((float) $revenue['total']); ?></h3></div></div>
-                <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Orders</h6><h3 class="fw-bold"><?php echo (int) $orders['count']; ?></h3></div></div>
-                <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Products</h6><h3 class="fw-bold"><?php echo (int) $products['count']; ?></h3></div></div>
-                <div class="col-md-3"><div class="card p-4"><h6 class="text-muted">Customers</h6><h3 class="fw-bold"><?php echo (int) $customers['count']; ?></h3></div></div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-receipt"></i></div>
+            <div>
+                <div class="stat-label">Orders</div>
+                <div class="stat-value"><?php echo (int) $orders['count']; ?></div>
             </div>
-        </main>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-bag-check"></i></div>
+            <div>
+                <div class="stat-label">Products</div>
+                <div class="stat-value"><?php echo (int) $products['count']; ?></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon purple"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="stat-label">Customers</div>
+                <div class="stat-value"><?php echo (int) $customers['count']; ?></div>
+            </div>
+        </div>
     </div>
 </div>
-</body>
-</html>
+
+<div class="row g-4">
+    <div class="col-xl-7">
+        <div class="admin-card h-100">
+            <div class="admin-card-header">
+                <div>
+                    <h5>Recent Orders</h5>
+                    <p>Latest 5 orders placed on the storefront</p>
+                </div>
+                <a href="orders.php" class="btn-admin-outline btn-admin-sm">View all</a>
+            </div>
+            <div class="admin-table-wrap">
+                <?php if (!empty($recentOrders)): ?>
+                    <table class="admin-table">
+                        <thead><tr><th>Order</th><th>Customer</th><th>Total</th><th>Status</th></tr></thead>
+                        <tbody>
+                        <?php foreach ($recentOrders as $order): ?>
+                            <tr>
+                                <td class="row-title">#<?php echo (int) $order['id']; ?></td>
+                                <td><?php echo e($order['customer_name']); ?></td>
+                                <td><?php echo format_currency((float) $order['total']); ?></td>
+                                <td><span class="status-pill status-<?php echo e($order['status']); ?>"><?php echo e($order['status']); ?></span></td>
+                            </tr>
+                        <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php else: ?>
+                    <div class="admin-empty"><i class="bi bi-receipt"></i><h6>No orders yet</h6></div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="admin-card h-100">
+            <div class="admin-card-header">
+                <div>
+                    <h5>New Products</h5>
+                    <p>Most recently added to the catalog</p>
+                </div>
+                <a href="products.php" class="btn-admin-outline btn-admin-sm">Manage</a>
+            </div>
+            <div class="admin-card-body pt-3">
+                <?php if (!empty($recentProducts)): ?>
+                    <?php foreach ($recentProducts as $product): ?>
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <img class="row-thumb" src="<?php echo e($product['image_url'] ?? 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=100&q=60'); ?>" alt="<?php echo e($product['name']); ?>">
+                            <div class="flex-grow-1">
+                                <div class="row-title"><?php echo e($product['name']); ?></div>
+                                <div class="row-subtle"><?php echo (int) $product['stock_quantity']; ?> in stock</div>
+                            </div>
+                            <div class="fw-bold small"><?php echo format_currency((float) ($product['sale_price'] > 0 ? $product['sale_price'] : $product['regular_price'])); ?></div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="admin-empty"><i class="bi bi-bag"></i><h6>No products yet</h6></div>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+</div>
+<?php require_once __DIR__ . '/Includes/footer.php'; ?>
