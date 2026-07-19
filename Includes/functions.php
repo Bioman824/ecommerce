@@ -66,6 +66,91 @@ function slugify(string $text): string {
     return $text ?: 'item';
 }
 
+/**
+ * Validates and stores an uploaded image, returning its public URL.
+ * @param array $file One entry of $_FILES (already normalized to a single file).
+ */
+function save_uploaded_image(array $file): string {
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $reason = in_array($file['error'], [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)
+            ? 'is larger than the server allows'
+            : 'could not be uploaded';
+        throw new RuntimeException('"' . $file['name'] . '" ' . $reason . '.');
+    }
+
+    $maxSize = 5 * 1024 * 1024;
+    if ($file['size'] > $maxSize) {
+        throw new RuntimeException('"' . $file['name'] . '" is larger than 5MB.');
+    }
+
+    $imageInfo = @getimagesize($file['tmp_name']);
+    $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/gif' => 'gif'];
+    if ($imageInfo === false || !isset($allowed[$imageInfo['mime']])) {
+        throw new RuntimeException('"' . $file['name'] . '" must be a JPG, PNG, WEBP or GIF image.');
+    }
+
+    if (!is_dir(UPLOAD_DIR) && !mkdir(UPLOAD_DIR, 0755, true) && !is_dir(UPLOAD_DIR)) {
+        throw new RuntimeException('Upload directory is not writable.');
+    }
+
+    $filename = bin2hex(random_bytes(8)) . '.' . $allowed[$imageInfo['mime']];
+    if (!move_uploaded_file($file['tmp_name'], UPLOAD_DIR . $filename)) {
+        throw new RuntimeException('Could not save "' . $file['name'] . '".');
+    }
+
+    return BASE_URL . 'Uploads/' . $filename;
+}
+
+/**
+ * Convenience wrapper for a single named file input; returns null when nothing was submitted.
+ */
+function handle_image_upload(string $fieldName): ?string {
+    if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    return save_uploaded_image($_FILES[$fieldName]);
+}
+
+/**
+ * Lists uploaded images in UPLOAD_DIR, most recent first.
+ */
+function get_media_library(): array {
+    if (!is_dir(UPLOAD_DIR)) {
+        return [];
+    }
+
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    $files = [];
+    foreach (scandir(UPLOAD_DIR) as $entry) {
+        $path = UPLOAD_DIR . $entry;
+        $extension = strtolower(pathinfo($entry, PATHINFO_EXTENSION));
+        if (!is_file($path) || !in_array($extension, $allowedExtensions, true)) {
+            continue;
+        }
+        $files[] = [
+            'name' => $entry,
+            'url' => BASE_URL . 'Uploads/' . $entry,
+            'size' => filesize($path),
+            'time' => filemtime($path),
+        ];
+    }
+
+    usort($files, static fn (array $a, array $b): int => $b['time'] <=> $a['time']);
+
+    return $files;
+}
+
+function format_file_size(int $bytes): string {
+    if ($bytes >= 1024 * 1024) {
+        return round($bytes / (1024 * 1024), 1) . ' MB';
+    }
+    if ($bytes >= 1024) {
+        return round($bytes / 1024) . ' KB';
+    }
+    return $bytes . ' B';
+}
+
 function get_setting(string $key, string $default = ''): string {
     try {
         $stmt = db()->prepare('SELECT setting_value FROM settings WHERE setting_key = ? LIMIT 1');

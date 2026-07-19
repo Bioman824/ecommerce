@@ -23,4 +23,14 @@ document.addEventListener("DOMContentLoaded", function () {
       }
     });
   });
+
+  document.querySelectorAll("[data-copy]").forEach((button) => {
+    button.addEventListener("click", function () {
+      navigator.clipboard.writeText(button.dataset.copy).then(() => {
+        const original = button.innerHTML;
+        button.innerHTML = '<i class="bi bi-check-lg"></i>';
+        setTimeout(() => { button.innerHTML = original; }, 1200);
+      });
+    });
+  });
 });

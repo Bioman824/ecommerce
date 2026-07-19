@@ -238,6 +238,22 @@ a { text-decoration: none; color: inherit; }
 .admin-table tbody tr:hover { background: #faf9f7; }
 .admin-table-wrap { overflow-x: auto; }
 
+.row-actions { display: flex; gap: 0.4rem; }
+.row-action-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--admin-border);
+  background: white;
+  color: var(--admin-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+.row-action-btn:hover { border-color: var(--admin-accent); color: var(--admin-accent-dark); background: var(--admin-accent-light); }
+.row-action-btn.danger:hover { border-color: #c92a2a; color: #c92a2a; background: #fdeeed; }
+
 .row-thumb {
   width: 2.75rem;
   height: 2.75rem;
@@ -333,6 +349,65 @@ a { text-decoration: none; color: inherit; }
   font-size: 0.88rem;
   font-weight: 600;
   margin-bottom: 1.25rem;
+}
+.admin-alert-error {
+  border-color: #f3c2c0;
+  background: #fdeeed;
+  color: #c92a2a;
+}
+
+/* ---------- Media library ---------- */
+.media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1rem;
+}
+.media-item {
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  overflow: hidden;
+  background: var(--admin-bg);
+  position: relative;
+}
+.media-item img {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+  display: block;
+}
+.media-item-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  display: flex;
+  gap: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.media-item:hover .media-item-overlay { opacity: 1; }
+.media-action {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  border: none;
+  background: rgba(20, 20, 28, 0.75);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+}
+.media-action:hover { background: var(--admin-accent); }
+.media-action-danger:hover { background: #c92a2a; }
+.media-item-meta {
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: var(--admin-surface);
+  border-top: 1px solid var(--admin-border);
 }
 
 /* ---------- Responsive ---------- */

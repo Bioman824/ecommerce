@@ -97,7 +97,7 @@ $recentProducts = db()->query('SELECT id, name, image_url, regular_price, sale_p
                 <?php if (!empty($recentProducts)): ?>
                     <?php foreach ($recentProducts as $product): ?>
                         <div class="d-flex align-items-center gap-3 mb-3">
-                            <img class="row-thumb" src="<?php echo e($product['image_url'] ?? 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=100&q=60'); ?>" alt="<?php echo e($product['name']); ?>">
+                            <img class="row-thumb" src="<?php echo e(!empty($product['image_url']) ? $product['image_url'] : 'https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=100&q=60'); ?>" alt="<?php echo e($product['name']); ?>">
                             <div class="flex-grow-1">
                                 <div class="row-title"><?php echo e($product['name']); ?></div>
                                 <div class="row-subtle"><?php echo (int) $product['stock_quantity']; ?> in stock</div>
