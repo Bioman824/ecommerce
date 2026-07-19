@@ -8,20 +8,22 @@ A single-vendor PHP 8.3+ / MySQL ecommerce storefront with a responsive, mobile-
 - Mobile navigation (offcanvas menu), live search, wishlist and cart badges
 - Product listing, detail pages, cart and checkout flow
 - AJAX cart interaction via `API/`
-- Admin dashboard with product, order, customer and settings management
+- Elegant admin dashboard (shared sidebar/topbar layout) covering products, orders, customers, analytics, payment gateways and settings
+- Full product CRUD — add, edit and delete catalog items from the admin panel
+- Media library with local image uploads from the admin's computer (validated, size/type-limited), used directly when creating or editing a product
 - Admin login kept fully separate from customer login — different page, different session guard, admin credentials cannot be used on the storefront login and vice versa
 - MySQL schema with normalized tables and indexed relationships
 
 ## Structure
 
-- `Admin/` — administrator dashboard pages (own login at `Admin/login.php`)
+- `Admin/` — administrator dashboard pages (own login at `Admin/login.php`, shared layout in `Admin/Includes/`)
 - `User/` — customer-facing account modules (profile, orders, wishlist)
 - `API/` — AJAX endpoints (cart, review, newsletter)
 - `Includes/` — shared header/footer/helpers
 - `Assets/` — CSS/JS
 - `Configuration/` — config and environment constants
 - `Database/` — SQL schema (`schema.sql`) and installer (`install.php`)
-- `Uploads/` — media storage
+- `Uploads/` — media storage for images uploaded through the admin Media Library
 
 ## Installation
 
